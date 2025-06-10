@@ -1,0 +1,141 @@
+/* Toggle bouton */
+.toggle-form-btn {
+  display: block;
+  margin: 1.5rem auto 0;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background-color: #203f6a;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.toggle-form-btn:hover {
+  opacity: 0.9;
+}
+
+/* Formulaire animé */
+.form-section {
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem auto;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+}
+.form-section.open {
+  max-height: 800px;
+  opacity: 1;
+  overflow: visible;
+}
+.form-section h2 {
+  margin-bottom: 1rem;
+}
+
+/* Champs et erreurs */
+.field {
+  position: relative;
+  margin-bottom: 1rem;
+}
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+.error {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translate(0, -50%);
+  margin-left: 0.5rem;
+  color: #c00;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Bouton sauvegarde */
+.save-btn {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #203f6a;
+  color: #fff;
+  margin-top: 0.5rem;
+}
+.save-btn:hover {
+  opacity: 0.9;
+}
+
+/* Recherche */
+.search-field {
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem auto;
+}
+.search-field input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Conteneur tableau centré */
+.table-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* Tableau avec bordure uniforme et coins arrondis */
+.table-wrapper table {
+  border-collapse: collapse;
+  border: 2px solid #203f6a;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  table-layout: auto;
+  width: auto;
+  margin: 0;
+}
+
+/* En-tête stylé */
+.table-wrapper thead tr th {
+  background-color: #203f6a;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* Cellules centrées */
+.table-wrapper tbody tr td {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  vertical-align: middle;
+  word-wrap: break-word;
+  border: none;
+}
+
+/* Lignes alternées & hover */
+.table-wrapper tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+.table-wrapper tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Actions sur une seule ligne */
+.actions-cell {
+  white-space: nowrap;
+}

@@ -10,11 +10,16 @@ html, body, #root {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   min-height: 100vh;
   padding: 2rem;
   text-align: center;
   font-family: sans-serif;
+}
+
+/* Décalage du contenu sous la topbar et alignement en haut */
+.App.content {
+  margin-top: 60px;       /* = hauteur de .topbar */
+  justify-content: flex-start;
 }
 
 /* Logos en haut */
@@ -49,10 +54,10 @@ html, body, #root {
 .form-section {
   width: 100%;
   max-width: 400px;
+  margin: 1.5rem auto;      /* centré horizontalement */
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin: 1.5rem 0;
 }
 .form-section input,
 .form-section button {
@@ -64,7 +69,7 @@ html, body, #root {
 .list-section {
   width: 100%;
   max-width: 600px;
-  margin-top: 2rem;
+  margin: 2rem auto;        /* centré horizontalement */
 }
 .list-section table {
   width: 100%;

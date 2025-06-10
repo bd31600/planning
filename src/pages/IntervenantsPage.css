@@ -1,0 +1,163 @@
+.toggle-form-btn {
+  display: block;
+  margin: 1.5rem auto 0;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background-color: #203f6a;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.toggle-form-btn:hover {
+  opacity: 0.9;
+}
+
+.form-section {
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem auto 0;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.form-section.open {
+  max-height: 600px;
+  opacity: 1;
+  overflow: visible;
+}
+.form-section h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.field {
+  position: relative;
+  margin-bottom: 1rem;
+}
+.field input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+.error {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translate(0, -50%);
+  margin-left: 0.5rem;
+  color: #c00;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Multiselect pour Référent et Modules */
+.multiselect-field {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.modules-checkboxes {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.modules-checkboxes .checkbox-title {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+.modules-checkboxes label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+/* Bouton sauvegarde */
+.save-btn {
+  display: block;
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  background-color: #203f6a;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+.save-btn:hover {
+  opacity: 0.9;
+}
+
+.search-field {
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem auto;
+}
+.search-field input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.list-section {
+  width: 100%;
+  max-width: 1000px;
+  margin: 1rem auto 2rem;
+}
+.list-section h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.table-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.table-wrapper table {
+  border-collapse: collapse;
+  border: 2px solid #203f6a;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: auto;
+  margin: 0;
+  table-layout: auto;
+}
+.table-wrapper thead tr th {
+  background-color: #203f6a;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+.table-wrapper tbody tr td {
+  padding: 0.75rem 1.5rem;
+  text-align: center;
+  vertical-align: middle;
+  word-wrap: break-word;
+  border: none;
+}
+.table-wrapper tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+.table-wrapper tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
