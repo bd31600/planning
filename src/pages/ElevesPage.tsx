@@ -1,4 +1,6 @@
-import { type FC, useState, useEffect, useCallback } from "react";
+// src/pages/ElevesPage.tsx
+
+import { type FC, useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../AuthProvider";
 import "./ElevesPage.css";
 
@@ -19,28 +21,42 @@ export type EleveWithMods = {
   nommodule_mineur: string | null;
 };
 
+// Keys available for sorting
+type SortKey = keyof EleveWithMods;
+
+
 const API_URL = import.meta.env.VITE_API_URL as string;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_PAIRS = [
-  ["NID", "TEAMS"],
-  ["A&S", "CD"],
-];
 
 const ElevesPage: FC = () => {
   const { user } = useAuth();
 
-  const [eleves, setEleves]     = useState<EleveWithMods[]>([]);
-  const [modules, setModules]   = useState<Module[]>([]);
-  const [nom, setNom]           = useState("");
-  const [prenom, setPrenom]     = useState("");
-  const [parcours, setParcours] = useState("");
-  const [mail, setMail]         = useState("");
-  const [maj, setMaj]           = useState<number | "">("");
-  const [min, setMin]           = useState<number | "">("");
-  const [editId, setEditId]     = useState<number | null>(null);
-  const [errors, setErrors]     = useState<Record<string,string>>({});
-  const [showForm, setShowForm] = useState(false);
-  const [search, setSearch]     = useState("");
+  const [eleves, setEleves]       = useState<EleveWithMods[]>([]);
+  const [modules, setModules]     = useState<Module[]>([]);
+  const [assocSet, setAssocSet]   = useState<Set<string>>(new Set());
+
+  const [nom, setNom]             = useState("");
+  const [prenom, setPrenom]       = useState("");
+  const [parcours, setParcours]   = useState("");
+  const [mail, setMail]           = useState("");
+  const [maj, setMaj]             = useState<number | "">("");
+  const [min, setMin]             = useState<number | "">("");
+  const [editId, setEditId]       = useState<number | null>(null);
+  const [errors, setErrors]       = useState<Record<string,string>>({});
+  const [showForm, setShowForm]   = useState(false);
+  const [search, setSearch]       = useState("");
+
+  // Sorting configuration
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null);
+
+  // Toggle sort direction for a column
+  const handleSort = (key: SortKey) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig?.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const callApi = useCallback(
     async (body: { action: string; entity?: string; payload?: unknown }) => {
@@ -60,15 +76,22 @@ const ElevesPage: FC = () => {
     [user]
   );
 
+  // Chargement modules, élèves et associations
   useEffect(() => {
     (async () => {
       try {
-        const m = await callApi({ action: "list", entity: "module_thematique" });
-        setModules(m.data as Module[]);
-        const e = await callApi({ action: "list", entity: "eleves" });
-        setEleves(e.data as EleveWithMods[]);
-      } catch (_err: unknown) {
-        console.error(_err);
+        const mResp = await callApi({ action:"list", entity:"module_thematique" });
+        setModules(mResp.data as Module[]);
+
+        const aResp = await callApi({ action:"list", entity:"AssociationModules" });
+        const arr = aResp.data as { id_assoc: number; id_module_majeur: number; id_module_mineur: number; }[];
+        // Préparer un Set pour validation rapide "maj-min"
+        setAssocSet(new Set(arr.map(a => `${a.id_module_majeur}-${a.id_module_mineur}`)));
+
+        const eResp = await callApi({ action:"list", entity:"eleves" });
+        setEleves(eResp.data as EleveWithMods[]);
+      } catch (e) {
+        console.error(e);
       }
     })();
   }, [callApi]);
@@ -96,15 +119,9 @@ const ElevesPage: FC = () => {
     if (min === "") newErrors.min = "Module mineur requis";
 
     if (maj !== "" && min !== "") {
-      const nomMaj = modules.find(m => m.id_module === maj)?.nommodule;
-      const nomMin = modules.find(m => m.id_module === min)?.nommodule;
-      const ok = VALID_PAIRS.some(
-        ([a, b]) =>
-          (nomMaj === a && nomMin === b) ||
-          (nomMaj === b && nomMin === a)
-      );
-      if (!ok) {
-        const msg = "Paire invalide (NID+TEAMS ou A&S+CD)";
+      const key = `${maj}-${min}`;
+      if (!assocSet.has(key)) {
+        const msg = "Association majeur/mineur non autorisée";
         newErrors.maj = msg;
         newErrors.min = msg;
       }
@@ -131,21 +148,22 @@ const ElevesPage: FC = () => {
           entity: "eleves",
           payload: { nom, prenom, parcours, maileleve: mail },
         });
-        id = resp.insertedId;
+        id = (resp as { insertedId: number }).insertedId;
       }
 
+      // Mettre à jour la table etudier
       await callApi({
         action: "insert",
         entity: "etudier",
         payload: { id_eleve: id, id_module_majeur: maj, id_module_mineur: min },
       });
 
-      const listResp = await callApi({ action: "list", entity: "eleves" });
-      setEleves(listResp.data as EleveWithMods[]);
+      const updated = await callApi({ action:"list", entity:"eleves" });
+      setEleves(updated.data as EleveWithMods[]);
       resetForm();
       setShowForm(false);
-    } catch (_err: unknown) {
-      console.error(_err);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -163,10 +181,10 @@ const ElevesPage: FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await callApi({ action: "delete", entity: "eleves", payload: { id_eleve: id } });
+      await callApi({ action:"delete", entity:"eleves", payload:{ id_eleve: id } });
       setEleves(prev => prev.filter(x => x.id_eleve !== id));
-    } catch (_err: unknown) {
-      console.error(_err);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -181,14 +199,39 @@ const ElevesPage: FC = () => {
     );
   });
 
+  // Memoized sorted data based on sortConfig
+  const sortedData = useMemo(() => {
+    if (!sortConfig) return filtered;
+    const { key, direction } = sortConfig;
+    return [...filtered].sort((a, b) => {
+      const aProp = a[key];
+      const bProp = b[key];
+      // Numeric sort for module ID columns
+      if (key === 'id_module_majeur' || key === 'id_module_mineur') {
+        const aNum = typeof aProp === 'number' ? aProp : 0;
+        const bNum = typeof bProp === 'number' ? bProp : 0;
+        return direction === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      // Fallback string comparison
+      const aVal = (aProp ?? '').toString();
+      const bVal = (bProp ?? '').toString();
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortConfig]);
+
   return (
-    <div>
+    <div className="eleves-page">
       {!showForm ? (
         <button className="toggle-form-btn" onClick={() => setShowForm(true)}>
           Ajouter un élève
         </button>
       ) : (
-        <button className="toggle-form-btn" onClick={() => { resetForm(); setShowForm(false); }}>
+        <button
+          className="toggle-form-btn"
+          onClick={() => { resetForm(); setShowForm(false); }}
+        >
           Annuler
         </button>
       )}
@@ -215,11 +258,14 @@ const ElevesPage: FC = () => {
         </div>
 
         <div className="field">
-          <input
+          <select
             value={parcours}
-            placeholder="Parcours"
             onChange={e => { setParcours(e.target.value); setErrors({ ...errors, parcours: "" }); }}
-          />
+          >
+            <option value="">— Choisir parcours —</option>
+            <option value="Intégré">Intégré</option>
+            <option value="Apprenti">Apprenti</option>
+          </select>
           {errors.parcours && <span className="error">{errors.parcours}</span>}
         </div>
 
@@ -271,27 +317,34 @@ const ElevesPage: FC = () => {
           onChange={e => setSearch(e.target.value)}
         />
       </div>
+
       <section className="list-section">
         <h2>Liste des élèves</h2>
         <div className="table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>ID</th><th>Nom</th><th>Prénom</th><th>Parcours</th>
-                <th>Majeur</th><th>Mineur</th><th>Mail</th><th>Actions</th>
+                <th className="col-id" onClick={() => handleSort('id_eleve')}>ID</th>
+                <th className="col-nom" onClick={() => handleSort('nom')}>Nom</th>
+                <th className="col-prenom" onClick={() => handleSort('prenom')}>Prénom</th>
+                <th className="col-parcours" onClick={() => handleSort('parcours')}>Parcours</th>
+                <th className="col-majeur" onClick={() => handleSort('id_module_majeur')}>Majeur</th>
+                <th className="col-mineur" onClick={() => handleSort('id_module_mineur')}>Mineur</th>
+                <th className="col-mail">Mail</th>
+                <th className="col-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(e => (
+              {sortedData.map(e => (
                 <tr key={e.id_eleve}>
-                  <td>{e.id_eleve}</td>
-                  <td>{e.nom}</td>
-                  <td>{e.prenom}</td>
-                  <td>{e.parcours}</td>
-                  <td>{e.nommodule_majeur || "—"}</td>
-                  <td>{e.nommodule_mineur || "—"}</td>
-                  <td>{e.maileleve}</td>
-                  <td className="actions-cell">
+                  <td className="col-id">{e.id_eleve}</td>
+                  <td className="col-nom">{e.nom}</td>
+                  <td className="col-prenom">{e.prenom}</td>
+                  <td className="col-parcours">{e.parcours}</td>
+                  <td className="col-majeur">{e.nommodule_majeur || "—"}</td>
+                  <td className="col-mineur">{e.nommodule_mineur || "—"}</td>
+                  <td className="col-mail">{e.maileleve}</td>
+                  <td className="col-actions actions-cell">
                     <button onClick={() => handleEdit(e)}>✏️</button>
                     <button onClick={() => handleDelete(e.id_eleve)}>🗑️</button>
                   </td>

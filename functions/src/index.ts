@@ -29,7 +29,7 @@ export const api = onRequest({ invoker: "public" }, async (req, res): Promise<vo
   // CORS préflight
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "POST,OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Timezone-Offset");
   if (req.method === "OPTIONS") {
     res.status(204).send("");
     return;
@@ -46,6 +46,15 @@ export const api = onRequest({ invoker: "public" }, async (req, res): Promise<vo
   }
   const email = decoded.email!;
   const conn  = await mysql.createConnection(dbConfig);
+  // Apply client timezone offset if provided (in minutes)
+  const tzOffsetHeader = req.get("X-Timezone-Offset");
+  if (tzOffsetHeader) {
+    const offsetMin = parseInt(tzOffsetHeader, 10);
+    const hours = Math.floor(Math.abs(offsetMin) / 60);
+    const minutes = Math.abs(offsetMin) % 60;
+    const zone = `${offsetMin <= 0 ? "+" : "-"}${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+    await conn.query("SET time_zone = ?", [zone]);
+  }
 
   try {
     const { action, entity, payload } = req.body as Body;
@@ -164,6 +173,180 @@ export const api = onRequest({ invoker: "public" }, async (req, res): Promise<vo
         return;
       }
 
+      // liste des modules avec type_module majeur/mineur (pour toolbar admin)
+      if (entity === "ModuleOptions") {
+        const sql = `
+          SELECT m.id_module, m.nommodule, 'majeur' AS type_module
+          FROM AssociationModules a
+          JOIN module_thematique m ON m.id_module = a.id_module_majeur
+          UNION ALL
+          SELECT m.id_module, m.nommodule, 'mineur' AS type_module
+          FROM AssociationModules a
+          JOIN module_thematique m ON m.id_module = a.id_module_mineur
+        `;
+        logger.info("SQL LIST MODULEOPTIONS:", sql);
+        const [rows] = await conn.query<RowDataPacket[]>(sql);
+        res.send({ success: true, data: rows });
+        return;
+      }
+
+      // ─── Cours special branch ──────────────────────────────────────────────
+      if (entity === "Cours") {
+        // determine role and id as in getRole
+        // admin
+        const [admRows] = await conn.query<
+          (RowDataPacket & { id_intervenant: number })[]
+        >(
+          "SELECT id_intervenant FROM intervenants WHERE mailreferent = ? AND referent = 1",
+          [email]
+        );
+        if (admRows.length) {
+          const sql = `
+            SELECT
+              c.*,
+              CONCAT(s.batiment, ' ', s.numerosalle) AS salle,
+              JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'id_intervenant', i.id_intervenant,
+                  'nom', i.nom,
+                  'prenom', i.prenom
+                )
+              ) AS intervenants,
+              JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'id_module', cm.id_module,
+                  'type_module', cm.type_module
+                )
+              ) AS modules
+            FROM Cours c
+            LEFT JOIN effectuer ef ON ef.id_cours = c.id_cours
+            LEFT JOIN salles s ON s.id_salle = ef.id_salle
+            LEFT JOIN enseigner en ON en.id_cours = c.id_cours
+            LEFT JOIN intervenants i ON i.id_intervenant = en.id_intervenant
+            LEFT JOIN CoursModules cm ON cm.id_cours = c.id_cours
+            GROUP BY c.id_cours
+          `;
+          logger.info("SQL LIST COURS ADMIN:", sql);
+          const [rows] = await conn.query<RowDataPacket[]>(sql);
+          // parse JSON arrays
+          const data = (rows as any[]).map(r => ({
+            ...r,
+            intervenants: r.intervenants ? JSON.parse(r.intervenants as string) : [],
+            modules: r.modules ? JSON.parse(r.modules as string) : [],
+          }));
+          res.send({ success: true, data });
+          return;
+        }
+        // intervenant simple
+        const [intRows] = await conn.query<
+          (RowDataPacket & { id_intervenant: number })[]
+        >(
+          "SELECT id_intervenant FROM intervenants WHERE mailreferent = ?",
+          [email]
+        );
+        if (intRows.length) {
+          const intervenantId = intRows[0].id_intervenant;
+          const sql = `
+            SELECT
+              c.*,
+              CONCAT(s.batiment, ' ', s.numerosalle) AS salle,
+              JSON_ARRAYAGG(DISTINCT
+                JSON_OBJECT(
+                  'id_intervenant', i2.id_intervenant,
+                  'nom', i2.nom,
+                  'prenom', i2.prenom
+                )
+              ) AS intervenants,
+              JSON_ARRAYAGG(DISTINCT
+                JSON_OBJECT(
+                  'id_module', cm.id_module,
+                  'type_module', cm.type_module
+                )
+              ) AS modules
+            FROM Cours c
+            LEFT JOIN effectuer ef  ON ef.id_cours = c.id_cours
+            LEFT JOIN salles s      ON s.id_salle  = ef.id_salle
+            LEFT JOIN enseigner en  ON en.id_cours = c.id_cours
+            LEFT JOIN intervenants i2 ON i2.id_intervenant = en.id_intervenant
+            LEFT JOIN CoursModules cm ON cm.id_cours = c.id_cours
+            LEFT JOIN intervenir iv   ON iv.id_module = cm.id_module
+            WHERE en.id_intervenant = ? OR iv.id_intervenant = ?
+            GROUP BY c.id_cours
+          `;
+          logger.info("SQL LIST COURS INTERVENANT:", sql, "VALS:", [intervenantId, intervenantId]);
+          const [rows] = await conn.query<RowDataPacket[]>(sql, [intervenantId, intervenantId]);
+          const data = (rows as any[]).map(r => ({
+            ...r,
+            intervenants: r.intervenants ? JSON.parse(r.intervenants as string) : [],
+            modules: r.modules ? JSON.parse(r.modules as string) : [],
+          }));
+          res.send({ success: true, data });
+          return;
+        }
+        // élève
+        const [eleRows] = await conn.query<
+          (RowDataPacket & { id_eleve: number })[]
+        >(
+          "SELECT id_eleve FROM eleves WHERE maileleve = ?",
+          [email]
+        );
+        if (eleRows.length) {
+          const eleveId = eleRows[0].id_eleve;
+          // Fetch parcours of the student
+          const [parcoursRows] = await conn.query<
+            (RowDataPacket & { parcours: string })[]
+          >(
+            "SELECT parcours FROM eleves WHERE id_eleve = ?",
+            [eleveId]
+          );
+          const parcoursEleve = parcoursRows.length ? parcoursRows[0].parcours : null;
+          const sql = `
+            SELECT
+              c.*,
+              CONCAT(s.batiment, ' ', s.numerosalle) AS salle,
+              JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'id_intervenant', i.id_intervenant,
+                  'nom', i.nom,
+                  'prenom', i.prenom
+                )
+              ) AS intervenants,
+              JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'id_module', cm.id_module,
+                  'type_module', cm.type_module
+                )
+              ) AS modules
+            FROM Cours c
+            LEFT JOIN effectuer ef ON ef.id_cours = c.id_cours
+            LEFT JOIN salles s ON s.id_salle = ef.id_salle
+            LEFT JOIN enseigner en ON en.id_cours = c.id_cours
+            LEFT JOIN intervenants i ON i.id_intervenant = en.id_intervenant
+            LEFT JOIN CoursModules cm ON cm.id_cours = c.id_cours
+            LEFT JOIN etudier et ON et.id_eleve = ?
+            WHERE 
+              (
+                (cm.type_module = 'majeur' AND cm.id_module = et.id_module_majeur)
+                OR (cm.type_module = 'mineur' AND cm.id_module = et.id_module_mineur)
+              )
+              AND (c.parcours = 'Tous' OR c.parcours = ?)
+            GROUP BY c.id_cours
+          `;
+          logger.info("SQL LIST COURS ELEVE:", sql, "VALS:", [eleveId, parcoursEleve]);
+          const [rows] = await conn.query<RowDataPacket[]>(sql, [eleveId, parcoursEleve]);
+          const data = (rows as any[]).map(r => ({
+            ...r,
+            intervenants: r.intervenants ? JSON.parse(r.intervenants as string) : [],
+            modules: r.modules ? JSON.parse(r.modules as string) : [],
+          }));
+          res.send({ success: true, data });
+          return;
+        }
+        // sinon
+        res.status(403).send({ error: "Accès refusé : non inscrit(e)." });
+        return;
+      }
+
       // générique
       const sql = `SELECT * FROM \`${entity}\``;
       logger.info("SQL LIST:", sql);
@@ -189,6 +372,32 @@ export const api = onRequest({ invoker: "public" }, async (req, res): Promise<vo
       return;
     }
 
+    // ─── INSERT réservation salle (effectuer) avec vérif de conflit ────────────────────
+    if (action === "insert" && entity === "effectuer" && payload) {
+      const { id_salle, id_cours } = payload as { id_salle: number; id_cours: number };
+      // Récupère les horaires du cours cible
+      const [[times]] = await conn.query<RowDataPacket[]>(
+        "SELECT debut_cours, fin_cours FROM Cours WHERE id_cours = ?",
+        [id_cours]
+      );
+      const { debut_cours, fin_cours } = times as any;
+      // Vérifie si la salle est déjà réservée sur cette plage
+      const [conflicts] = await conn.query<RowDataPacket[]>(
+        `SELECT c.id_cours
+         FROM Cours c
+         JOIN effectuer ef ON ef.id_cours = c.id_cours
+         WHERE ef.id_salle = ?
+           AND c.id_cours <> ?
+           AND NOT (c.fin_cours <= ? OR c.debut_cours >= ?)
+         LIMIT 1`,
+        [id_salle, id_cours, debut_cours, fin_cours]
+      );
+      if ((conflicts as any[]).length > 0) {
+        res.status(400).send({ error: "Salle déjà réservée pour ce créneau." });
+        return;
+      }
+    }
+
     // ─── INSERT générique ────────────────────────────────────────────────
     if (action === "insert" && payload) {
       const cols  = Object.keys(payload).map(c => `\`${c}\``).join(",");
@@ -200,6 +409,32 @@ export const api = onRequest({ invoker: "public" }, async (req, res): Promise<vo
       const [r] = await conn.execute(sql, vals);
       res.send({ success: true, insertedId: (r as any).insertId });
       return;
+    }
+
+    // ─── UPDATE réservation salle (effectuer) avec vérif de conflit ────────────────────
+    if (action === "update" && entity === "effectuer" && payload) {
+      const { id_salle, id_cours } = payload as { id_salle: number; id_cours: number };
+      // Récupère les horaires du cours cible
+      const [[times]] = await conn.query<RowDataPacket[]>(
+        "SELECT debut_cours, fin_cours FROM Cours WHERE id_cours = ?",
+        [id_cours]
+      );
+      const { debut_cours, fin_cours } = times as any;
+      // Vérifie si la salle est déjà réservée sur cette plage
+      const [conflicts] = await conn.query<RowDataPacket[]>(
+        `SELECT c.id_cours
+         FROM Cours c
+         JOIN effectuer ef ON ef.id_cours = c.id_cours
+         WHERE ef.id_salle = ?
+           AND c.id_cours <> ?
+           AND NOT (c.fin_cours <= ? OR c.debut_cours >= ?)
+         LIMIT 1`,
+        [id_salle, id_cours, debut_cours, fin_cours]
+      );
+      if ((conflicts as any[]).length > 0) {
+        res.status(400).send({ error: "Salle déjà réservée pour ce créneau." });
+        return;
+      }
     }
 
     // ─── UPDATE générique ────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 // src/pages/IntervenantsPage.tsx
 
-import { type FC, useState, useEffect, useCallback } from "react";
+import { type FC, useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../AuthProvider";
 import "./IntervenantsPage.css";
 
@@ -17,6 +17,9 @@ export type Intervenant = {
   mailreferent: string;
   modules?: Module[];
 };
+
+// Keys available for sorting
+type SortKey = keyof Intervenant;
 
 interface ApiListResponse<T>  { success: true; data: T[]; }
 interface ApiInsertResponse    { success: true; insertedId: number; }
@@ -45,28 +48,38 @@ const IntervenantsPage: FC = () => {
   const [showForm, setShowForm]         = useState(false);
   const [search, setSearch]             = useState("");
 
+  // Sorting configuration
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null);
+
+  // Toggle sort direction for a column
+  const handleSort = (key: SortKey) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig?.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   const fetchModules = useCallback(async () => {
     const token = await user!.getIdToken();
     const res   = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action: "list", entity: "module_thematique" }),
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ action:"list", entity:"module_thematique" }),
     });
     const json = (await res.json()) as ApiList<Module>;
     if (json.success) setModules(json.data);
-    else console.error(json.error);
   }, [user]);
 
   const fetchIntervenants = useCallback(async () => {
     const token = await user!.getIdToken();
     const res   = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action: "list", entity: "intervenants" }),
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ action:"list", entity:"intervenants" }),
     });
     const json = (await res.json()) as ApiList<Intervenant>;
     if (json.success) setIntervenants(json.data);
-    else console.error(json.error);
   }, [user]);
 
   useEffect(() => {
@@ -78,8 +91,8 @@ const IntervenantsPage: FC = () => {
     const token = await user!.getIdToken();
     const res   = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action: "insert", entity, payload }),
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ action:"insert", entity, payload }),
     });
     const json = (await res.json()) as ApiInsert;
     if (json.success) return json.insertedId;
@@ -90,8 +103,8 @@ const IntervenantsPage: FC = () => {
     const token = await user!.getIdToken();
     const res   = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action: "delete", entity, payload }),
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ action:"delete", entity, payload }),
     });
     const json = (await res.json()) as ApiEmpty;
     if (!json.success) throw new Error(json.error);
@@ -99,8 +112,12 @@ const IntervenantsPage: FC = () => {
 
   const resetForm = () => {
     setEditId(null);
-    setNom(""); setPrenom(""); setMail(""); setReferent(null);
-    setSelectedMods([]); setErrors({});
+    setNom("");
+    setPrenom("");
+    setMail("");
+    setReferent(null);
+    setSelectedMods([]);
+    setErrors({});
   };
 
   const validate = (): boolean => {
@@ -119,23 +136,29 @@ const IntervenantsPage: FC = () => {
     if (!validate()) return;
     try {
       let id: number;
+
       if (editId !== null) {
-        await callInsert("intervenants", {
-          id_intervenant: editId,
-          nom, prenom,
-          referent: referent!,
-          mailreferent: mail,
+        const token = await user!.getIdToken();
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+          body: JSON.stringify({
+            action:"update",
+            entity:"intervenants",
+            payload:{
+              id_intervenant: editId,
+              nom,
+              prenom,
+              referent: referent!,
+              mailreferent: mail
+            }
+          }),
         });
         id = editId;
       } else {
-        id = await callInsert("intervenants", {
-          nom, prenom,
-          referent: referent!,
-          mailreferent: mail,
-        });
+        id = await callInsert("intervenants", { nom, prenom, referent: referent!, mailreferent: mail });
       }
 
-      // update join table
       await callEmpty("intervenir", { id_intervenant: id });
       for (const mid of selectedMods) {
         await callInsert("intervenir", { id_intervenant: id, id_module: mid });
@@ -144,8 +167,9 @@ const IntervenantsPage: FC = () => {
       await fetchIntervenants();
       resetForm();
       setShowForm(false);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error(err);
+      alert("Erreur lors de l’enregistrement");
     }
   };
 
@@ -156,17 +180,18 @@ const IntervenantsPage: FC = () => {
     setMail(i.mailreferent);
     setReferent(i.referent);
     setSelectedMods(i.modules?.map(m => m.id_module) || []);
-    setErrors({}); setShowForm(true);
+    setErrors({});
+    setShowForm(true);
   };
 
   const handleDelete = async (id: number) => {
+    if (!window.confirm("Voulez-vous vraiment supprimer cet intervenant ?")) return;
     try {
       await callEmpty("intervenir", { id_intervenant: id });
       await callEmpty("intervenants", { id_intervenant: id });
       setIntervenants(prev => prev.filter(x => x.id_intervenant !== id));
-    } catch (err: unknown) {
+    } catch (err) {
       console.error(err);
-      alert("Erreur lors de la suppression");
     }
   };
 
@@ -181,6 +206,32 @@ const IntervenantsPage: FC = () => {
     );
   });
 
+  // Memoized sorted data based on sortConfig
+  const sortedData = useMemo(() => {
+    if (!sortConfig) return filtered;
+    const { key, direction } = sortConfig;
+    return [...filtered].sort((a, b) => {
+      if (key === 'id_intervenant') {
+        const aNum = a.id_intervenant;
+        const bNum = b.id_intervenant;
+        if (aNum !== bNum) {
+          return direction === 'asc' ? aNum - bNum : bNum - aNum;
+        }
+        return 0;
+      }
+      if (key === 'modules') {
+        const aNum = a.modules?.[0]?.id_module ?? 0;
+        const bNum = b.modules?.[0]?.id_module ?? 0;
+        return direction === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      const aVal = a[key];
+      const bVal = b[key];
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortConfig]);
+
   return (
     <div className="intervenants-page">
       {!showForm ? (
@@ -188,19 +239,30 @@ const IntervenantsPage: FC = () => {
           Ajouter un intervenant
         </button>
       ) : (
-        <button className="toggle-form-btn" onClick={() => { resetForm(); setShowForm(false); }}>
+        <button
+          className="toggle-form-btn"
+          onClick={() => {
+            resetForm();
+            setShowForm(false);
+          }}
+        >
           Annuler
         </button>
       )}
 
       <section className={`form-section${showForm ? " open" : ""}`}>
-        <h2>{editId !== null ? "Modifier intervenant" : "Ajouter intervenant"}</h2>
+        <h2>
+          {editId !== null ? "Modifier intervenant" : "Ajouter intervenant"}
+        </h2>
 
         <div className="field">
           <input
             value={nom}
             placeholder="Nom"
-            onChange={e => { setNom(e.target.value); setErrors({ ...errors, nom: "" }); }}
+            onChange={e => {
+              setNom(e.target.value);
+              setErrors({ ...errors, nom: "" });
+            }}
           />
           {errors.nom && <span className="error">{errors.nom}</span>}
         </div>
@@ -209,19 +271,26 @@ const IntervenantsPage: FC = () => {
           <input
             value={prenom}
             placeholder="Prénom"
-            onChange={e => { setPrenom(e.target.value); setErrors({ ...errors, prenom: "" }); }}
+            onChange={e => {
+              setPrenom(e.target.value);
+              setErrors({ ...errors, prenom: "" });
+            }}
           />
           {errors.prenom && <span className="error">{errors.prenom}</span>}
         </div>
 
         <div className="field multiselect-field">
           <div className="modules-checkboxes">
+            <span className="checkbox-title">Référent :</span>
             <label>
               Oui
               <input
                 type="checkbox"
                 checked={referent === true}
-                onChange={() => { setReferent(true); setErrors({ ...errors, referent: "" }); }}
+                onChange={() => {
+                  setReferent(true);
+                  setErrors({ ...errors, referent: "" });
+                }}
               />
             </label>
             <label>
@@ -229,7 +298,10 @@ const IntervenantsPage: FC = () => {
               <input
                 type="checkbox"
                 checked={referent === false}
-                onChange={() => { setReferent(false); setErrors({ ...errors, referent: "" }); }}
+                onChange={() => {
+                  setReferent(false);
+                  setErrors({ ...errors, referent: "" });
+                }}
               />
             </label>
           </div>
@@ -241,7 +313,10 @@ const IntervenantsPage: FC = () => {
             type="email"
             value={mail}
             placeholder="Adresse e-mail"
-            onChange={e => { setMail(e.target.value); setErrors({ ...errors, mail: "" }); }}
+            onChange={e => {
+              setMail(e.target.value);
+              setErrors({ ...errors, mail: "" });
+            }}
           />
           {errors.mail && <span className="error">{errors.mail}</span>}
         </div>
@@ -289,20 +364,25 @@ const IntervenantsPage: FC = () => {
           <table>
             <thead>
               <tr>
-                <th>ID</th><th>Nom</th><th>Prénom</th>
-                <th>Référent</th><th>E-mail</th><th>Modules</th><th>Actions</th>
+                <th className="iv-col-id" onClick={() => handleSort('id_intervenant')}>ID</th>
+                <th className="iv-col-nom" onClick={() => handleSort('nom')}>Nom</th>
+                <th className="iv-col-prenom" onClick={() => handleSort('prenom')}>Prénom</th>
+                <th className="iv-col-referent" onClick={() => handleSort('referent')}>Référent</th>
+                <th className="iv-col-mail" onClick={() => handleSort('mailreferent')}>E-mail</th>
+                <th className="iv-col-modules" onClick={() => handleSort('modules')}>Modules</th>
+                <th className="iv-col-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(i => (
+              {sortedData.map(i => (
                 <tr key={i.id_intervenant}>
-                  <td>{i.id_intervenant}</td>
-                  <td>{i.nom}</td>
-                  <td>{i.prenom}</td>
-                  <td>{i.referent ? "Oui" : "Non"}</td>
-                  <td>{i.mailreferent}</td>
-                  <td>{(i.modules || []).map(m => m.nommodule).join(", ")}</td>
-                  <td className="actions-cell">
+                  <td className="iv-col-id">{i.id_intervenant}</td>
+                  <td className="iv-col-nom">{i.nom}</td>
+                  <td className="iv-col-prenom">{i.prenom}</td>
+                  <td className="iv-col-referent">{i.referent ? "Oui" : "Non"}</td>
+                  <td className="iv-col-mail">{i.mailreferent}</td>
+                  <td className="iv-col-modules">{(i.modules || []).map(m => m.nommodule).join(", ")}</td>
+                  <td className="iv-col-actions actions-cell">
                     <button onClick={() => handleEdit(i)}>✏️</button>
                     <button onClick={() => handleDelete(i.id_intervenant)}>🗑️</button>
                   </td>

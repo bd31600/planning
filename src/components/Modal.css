@@ -1,0 +1,221 @@
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Pas d'arrière-plan pour laisser la page interactive */
+  background: transparent;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.modal {
+  position: absolute;
+  width: 500px;
+  max-width: 90%;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  pointer-events: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1rem;
+  cursor: grab;
+  background: #203f6a;
+  color: #fff;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  position: relative;
+}
+
+.modal-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0;
+  color: #fff;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+}
+
+.modal-body {
+  padding: 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Center form contents inside modal */
+.modal-body form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+/* Apply only to normal field wrappers, not to flex-row containers or modal-actions */
+.modal-body form > div:not(.module-row):not(.type-row):not(.date-row):not(.select-row):not(.modal-actions) {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Exclude module-row from generic div styling */
+.modal-body form > .module-row {
+  display: flex; /* preserve flex from specific rule */
+  flex-direction: row;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.modal-body form label {
+  width: 100%;
+  text-align: center;
+}
+.modal-body form input,
+.modal-body form textarea,
+.modal-body form select {
+  margin: 0.25rem 0;
+  width: auto;
+  min-width: 0;
+}
+.modal-body form button[type="submit"] {
+  align-self: center;
+}
+
+/* Layout for form fields */
+.modal-body form .field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.modal-body form .field label {
+  text-align: center;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.modal-body form .field select,
+.modal-body form .field input,
+.modal-body form .field textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Height for multiple-selects */
+.modal-body form .field select[multiple] {
+  min-height: 5rem;
+}
+
+/* Flex container for module selects */
+.modal-body form .module-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: space-between;
+}
+.modal-body form .module-row .field {
+  flex: 1;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Center labels for module majeur and mineur fields */
+.modal-body form .module-row .field label {
+  text-align: center;
+}
+
+/* Ensure form flex layout allows wrapping */
+.modal-body form {
+  flex-wrap: wrap;
+}
+
+/* Type de cours & Matière side by side */
+.modal-body form .type-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 0.125rem;
+}
+.modal-body form .type-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Début & Fin side by side */
+.modal-body form .date-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 0.125rem;
+}
+.modal-body form .date-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Parcours & Intervenants side by side */
+.modal-body form .select-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 0.125rem;
+}
+.modal-body form .select-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Module majeur & Module mineur side by side */
+.modal-body form .module-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 0.125rem;
+}
+.modal-body form .module-row .field {
+  flex: 1;
+  min-width: 0;
+}
+/* Center text within select fields for specific rows */
+.modal-body form .select-row .field select,
+.modal-body form .module-row .field select {
+  text-align: center;
+}
+
+/* Align action buttons (Modifier & Supprimer) on one line */
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.modal-actions button {
+  flex: none;
+  white-space: nowrap;
+}

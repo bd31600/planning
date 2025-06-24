@@ -1,0 +1,192 @@
+.calendar {
+  background: #f5f5f5;
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar__body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 1% 1% 0.5% 1%;
+  gap: 1%;
+}
+
+.calendar__sidebar {
+  flex: 0 0 15%;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.calendar__sidebar-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.calendar__display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1%;
+}
+
+.calendar__nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.calendar__nav-label {
+  position: absolute;
+  left: 1.5rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #333;
+}
+
+.calendar__nav-buttons {
+  margin: 0 auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.calendar__nav button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+.calendar__nav button:hover {
+  background: #e6e6e6;
+}
+.calendar__nav button.active {
+  background: #203f6a;
+  color: #fff;
+  border-color: #203f6a;
+}
+
+.calendar__main {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  overflow: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.calendar__main .fc {
+  height: 100%;
+}
+
+.fc, .fc * {
+  color: inherit !important;
+}
+
+.fc .fc-day-today {
+  background: none !important;
+}
+
+
+.fc-event-month {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fc-event-month .fc-event-dot {
+  margin-right: 0.25em;
+  vertical-align: middle;
+}
+
+/* Day/Week view custom event styling */
+.fc .fc-timegrid-slot-minor {
+  border-top: none !important;
+}
+.fc .fc-timegrid-event .fc-event-title,
+.fc .fc-timegrid-event .fc-event-time,
+.fc .fc-daygrid-event .fc-event-title,
+.fc .fc-daygrid-event .fc-event-time {
+  color: #fff !important;
+}
+.fc .fc-event-custom,
+.fc .fc-event-custom * {
+  color: #fff !important;
+}
+/* src/components/Calendar.css */
+
+/* --------------------------
+   Spécial vue Mois : masquer
+   le fond vert des jours fériés et fêtes
+   -------------------------- */
+.fc-view.fc-dayGridMonth-view .fc-event.holiday-event,
+.fc-view.fc-dayGridMonth-view .fc-daygrid-dot-event.holiday-event {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: #000             !important;
+}
+.fc-view.fc-dayGridMonth-view .fc-daygrid-dot-event.holiday-event .fc-event-dot {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Styles pour la liste des prochains événements */
+.calendar__sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.calendar__sidebar-item {
+  border-bottom: 1px solid #ccc;
+  margin: 0 0.5rem 1rem; /* horizontal margins so the line doesn't touch edges */
+  padding-bottom: 1rem;
+}
+.calendar__sidebar-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.calendar__sidebar-date {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.calendar__sidebar-text {
+  font-size: 0.9rem;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Day/Week view current day highlight using borders */
+.fc .fc-col-header-cell.fc-day-today {
+  border-bottom: 3px solid #203f6a !important;
+}
+
+/* Month view current day box */
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  display: inline-block;
+  border: 2px solid #203f6a !important;
+  border-radius: 6px;
+  padding: 0em 0.2em;
+  margin: 0.2em;
+}

@@ -1,5 +1,5 @@
 import { type FC } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../AuthProvider";
 import logoIcam from "../assets/logotype-seul-couleur-CMJN.jpg";
 import "./Topbar.css";
@@ -19,7 +19,6 @@ const Topbar: FC<TopbarProps> = ({ role }) => {
 
   return (
     <header className="topbar">
-      {/* Zone gauche : logo + profil */}
       <div className="topbar__left">
         <img src={logoIcam} alt="Logo ICAM" className="topbar__logo" />
         <div className="topbar__profile">
@@ -34,24 +33,42 @@ const Topbar: FC<TopbarProps> = ({ role }) => {
         </div>
       </div>
 
-      {/* Zone centrale : titre */}
       <div className="topbar__center">
         <Link to="/" className="topbar__title">
           Planning ICAM
         </Link>
       </div>
 
-      {/* Zone droite : liens/actions */}
       <div className="topbar__actions">
-        {(role === "admin" || role === "intervenant") && (
-          <Link to="/eleves" className="topbar__link">
+        {role === "admin" && (
+          <NavLink
+            to="/eleves"
+            className={({ isActive }) =>
+              isActive ? "topbar__link topbar__link--active" : "topbar__link"
+            }
+          >
             Élèves
-          </Link>
+          </NavLink>
         )}
         {role === "admin" && (
-          <Link to="/intervenants" className="topbar__link">
+          <NavLink
+            to="/intervenants"
+            className={({ isActive }) =>
+              isActive ? "topbar__link topbar__link--active" : "topbar__link"
+            }
+          >
             Intervenants
-          </Link>
+          </NavLink>
+        )}
+        {role === "admin" && (
+          <NavLink
+            to="/parametres"
+            className={({ isActive }) =>
+              isActive ? "topbar__link topbar__link--active" : "topbar__link"
+            }
+          >
+            Paramètres
+          </NavLink>
         )}
         <button onClick={logout} className="topbar__logout">
           Se déconnecter

@@ -1,3 +1,7 @@
+/* Ensure gap under the topbar matches the calendar background */
+body {
+  background: #f5f5f5;
+}
 .topbar {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -85,7 +89,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 /* Liens et bouton */
@@ -104,4 +108,10 @@
 .topbar__link:hover,
 .topbar__logout:hover {
   text-decoration: underline;
+}
+/* Ligne bleue sous le lien actif */
+.topbar__link--active {
+  border-bottom: 3px solid #203f6a;
+  /* Compense le border-bottom pour éviter de décaler le texte */
+  margin-bottom: -3px;
 }

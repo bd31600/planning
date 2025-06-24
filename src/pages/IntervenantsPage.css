@@ -96,68 +96,116 @@
   opacity: 0.9;
 }
 
-.search-field {
-  width: 100%;
-  max-width: 400px;
-  margin: 1rem auto;
-}
-.search-field input {
-  width: 100%;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-
-.list-section {
-  width: 100%;
-  max-width: 1000px;
-  margin: 1rem auto 2rem;
-}
-.list-section h2 {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.table-wrapper {
-  display: flex;
-  justify-content: center;
-}
-
-.table-wrapper table {
-  border-collapse: collapse;
-  border: 2px solid #203f6a;
+/* Conteneur tableau centré */
+.intervenants-page .table-wrapper {
+  background-color: #fff;
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  width: auto;
-  margin: 0;
-  table-layout: auto;
+  overflow: hidden;
 }
-.table-wrapper thead tr th {
+
+/* Tableau avec bordure uniforme et coins arrondis */
+.intervenants-page .table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Scrolling body */
+.intervenants-page .table-wrapper tbody {
+  display: block;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Maintain alignment and sticky header */
+.intervenants-page .table-wrapper thead,
+.intervenants-page .table-wrapper tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* En-tête stylé */
+.intervenants-page .table-wrapper thead tr th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   background-color: #203f6a;
   color: #fff;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1rem;
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
 }
-.table-wrapper tbody tr td {
-  padding: 0.75rem 1.5rem;
+
+/* Cellules centrées */
+.intervenants-page .table-wrapper tbody tr td {
+  padding: 0.75rem 1rem;
   text-align: center;
   vertical-align: middle;
   word-wrap: break-word;
   border: none;
 }
-.table-wrapper tbody tr:nth-child(even) {
+
+/* Lignes alternées & hover */
+.intervenants-page .table-wrapper tbody tr:nth-child(even) {
   background-color: #f9f9f9;
 }
-.table-wrapper tbody tr:hover {
+.intervenants-page .table-wrapper tbody tr:hover {
   background-color: #f1f1f1;
 }
 
-.actions-cell {
+/* Actions sur une seule ligne */
+.intervenants-page .actions-cell {
   white-space: nowrap;
+}
+
+/* Arrondir coins supérieurs du tableau */
+.intervenants-page .table-wrapper thead tr th:first-child {
+  border-top-left-radius: 12px;
+}
+.intervenants-page .table-wrapper thead tr th:last-child {
+  border-top-right-radius: 12px;
+}
+
+/* Arrondir coins inférieurs du tableau */
+.intervenants-page .table-wrapper tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 12px;
+}
+.intervenants-page .table-wrapper tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+/* Largeurs personnalisées des colonnes */
+.intervenants-page .table-wrapper thead tr th.iv-col-id,
+.intervenants-page .table-wrapper tbody tr td.iv-col-id {
+  width: 5%;
+}
+.intervenants-page .table-wrapper thead tr th.iv-col-nom,
+.intervenants-page .table-wrapper tbody tr td.iv-col-nom {
+  width: 10%;
+}
+.intervenants-page .table-wrapper thead tr th.iv-col-prenom,
+.intervenants-page .table-wrapper tbody tr td.iv-col-prenom {
+  width: 10%;
+}
+.intervenants-page .table-wrapper thead tr th.iv-col-referent,
+.intervenants-page .table-wrapper tbody tr td.iv-col-referent {
+  width: 10%;
+}
+.intervenants-page .table-wrapper thead tr th.iv-col-mail,
+.intervenants-page .table-wrapper tbody tr td.iv-col-mail {
+  width: 30%;
+}
+.intervenants-page .table-wrapper thead tr th.iv-col-modules,
+.intervenants-page .table-wrapper tbody tr td.iv-col-modules {
+  width: 20%;
+}
+.intervenants-page .table-wrapper thead tr th.iv-col-actions,
+.intervenants-page .table-wrapper tbody tr td.iv-col-actions {
+  width: 15%;
 }

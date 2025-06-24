@@ -1,0 +1,334 @@
+.calendar {
+  background: #f5f5f5;
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar__body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 1% 1% 0.5% 1%;
+  gap: 1%;
+}
+
+.calendar__sidebar {
+  flex: 0 0 15%;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.calendar__sidebar-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.calendar__display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1%;
+}
+
+.calendar__nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.calendar__nav-label {
+  position: absolute;
+  left: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #333;
+}
+
+.calendar__nav-label .calendar__current-time {
+  margin-left: 0.5rem;
+}
+
+.calendar__nav-buttons {
+  margin: 0 auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.calendar__nav button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+.calendar__nav button:hover {
+  background: #e6e6e6;
+}
+.calendar__nav button.active {
+  background: #203f6a;
+  color: #fff;
+  border-color: #203f6a;
+}
+
+.calendar__main {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  overflow: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.calendar__main .fc {
+  height: 100%;
+}
+
+.fc, .fc * {
+  color: inherit !important;
+}
+
+.fc .fc-day-today {
+  background: none !important;
+}
+
+
+.fc-event-month {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fc-event-month .fc-event-dot {
+  margin-right: 0.25em;
+  vertical-align: middle;
+}
+
+/* Day/Week view custom event styling */
+.fc .fc-timegrid-slot-minor {
+  border-top: none !important;
+}
+.fc .fc-timegrid-event .fc-event-title,
+.fc .fc-timegrid-event .fc-event-time,
+.fc .fc-daygrid-event .fc-event-title,
+.fc .fc-daygrid-event .fc-event-time {
+  color: #fff !important;
+}
+.fc .fc-event-custom,
+.fc .fc-event-custom * {
+  color: #fff !important;
+}
+/* src/components/Calendar.css */
+
+/* --------------------------
+   Spécial vue Mois : masquer
+   le fond vert des jours fériés et fêtes
+   -------------------------- */
+.fc-view.fc-dayGridMonth-view .fc-event.holiday-event,
+.fc-view.fc-dayGridMonth-view .fc-daygrid-dot-event.holiday-event {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: #000             !important;
+}
+.fc-view.fc-dayGridMonth-view .fc-daygrid-dot-event.holiday-event .fc-event-dot {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Styles pour la liste des prochains événements */
+.calendar__sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.calendar__sidebar-item {
+  border-bottom: 1px solid #ccc;
+  margin: 0 0.5rem 1rem 0; /* top, right, bottom, left */
+  padding: 0 0 1rem 0;  /* reset left padding */
+}
+.calendar__sidebar-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.calendar__sidebar-date {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.calendar__sidebar-text {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  text-align: left !important;
+  font-size: 0.9rem;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Day/Week view current day highlight using borders */
+.fc .fc-col-header-cell.fc-day-today {
+  border-bottom: 3px solid #203f6a !important;
+}
+
+/* Month view current day box */
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  display: inline-block;
+  border: 2px solid #203f6a !important;
+  border-radius: 6px;
+  padding: 0em 0.2em;
+  margin: 0.2em;
+}
+.modal-body form .module-row .field {
+  flex: 1;
+  max-width: 300px;
+}
+/* Ligne rouge pour l’heure actuelle en vue jour/semaine */
+.fc .fc-now-indicator {
+  border-top: 2px solid red !important;
+}
+/* Déplacer la flèche du nowIndicator sur la marge gauche */
+.fc .fc-timegrid-now-indicator-arrow {
+  left: 0 !important;                              /* coller à l'extrême gauche */
+  transform: translateX(-50%) !important;          /* centrer horizontalement */
+}
+/* 1) Masquer la flèche par défaut dans la colonne des heures */
+.fc .fc-timegrid-now-indicator-arrow {
+  display: none !important;
+}
+
+/* 2) Relocaliser la flèche sous la colonne du jour courant */
+
+/* Positionne le conteneur de la ligne comme référence */
+.fc .fc-timegrid-col.fc-day-today .fc-timegrid-now-indicator-line {
+  position: relative; 
+  overflow: visible;
+}
+
+.fc .fc-timegrid-col.fc-day-today .fc-timegrid-now-indicator-line::before {
+  content: "";
+  position: absolute;
+  top: -4px;              /* adjust so circle sits on the line */
+  left: 0;                /* left edge of the column */
+  width: 8px;
+  height: 8px;
+  background-color: red;  /* same color as the line */
+  border-radius: 50%;
+}
+/* Style pour le filtre de modules dans la toolbar */
+.module-filter {
+  margin-left: 1rem;
+  padding: 0.2rem;
+  border-radius: 4px;
+}
+/* Bouton pour filtrer les modules */
+.module-filter-btn {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Conteneur du dropdown des modules */
+.module-filter-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 1rem;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 4px;
+  padding: 0.5rem;
+  z-index: 100;
+}
+
+/* Taille du select dans le dropdown */
+.module-filter-dropdown select {
+  width: 200px;
+}
+.module-filter-dropdown {
+  display: flex;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 4px;
+  padding: 0.5rem;
+  position: absolute;
+  top: 100%;
+  right: 1rem;
+  z-index: 100;
+}
+
+.module-filter-group {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.module-filter-group-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.module-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.module-filter-option input {
+  cursor: pointer;
+}
+.module-filter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.module-filter-dropdown {
+  text-align: center; /* centre global du menu */
+}
+.module-filter-option {
+  display: inline-block;
+  margin: 0.4rem;    /* espacement horizontal entre options */
+}
+.module-filter-dropdown {
+  display: grid !important;
+  /* Place each filter group in its own column */
+  grid-auto-flow: column !important;
+  column-gap: 1rem !important;
+  /* preserve dropdown positioning */
+  position: absolute;
+  top: 100%;
+  right: 1rem;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 4px;
+  padding: 0.5rem;
+  z-index: 100;
+  text-align: left;
+}
